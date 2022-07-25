@@ -1,0 +1,42 @@
+﻿@page
+@model IndexModel
+<script defer src="https://unpkg.com/alpinejs@3.10.3/dist/cdn.min.js"></script>
+<script>
+    async function listCategories() {
+        return fetch('https://localhost:7018/api/list-categories', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                return data
+            }
+            )
+    }
+</script>
+<div x-data="{ categories: [] }" class="text-center">
+    <div class="row row-cols-1 row-cols-md-4 g-2 text-center">
+        <template x-for="category in categories">
+            <div>
+                <div class="col">
+                    <div class="card h-100 text-center" style="background-color:#1A2238;margin-left:2px;margin-top:5px;">
+                        <div class="card-body">
+                            <h5 x-text="category" class="card-title" style="color:white"></h5>
+                            <a asp-page="Edit" asp-route-category="x-text='category'" class="btn btn-dark" style="background-color:#FF6A3D;color:white;margin-top:10px;">
+                                <i class="bi bi-pencil-square">Edit</i>
+                            </a>
+                            <a asp-page="Delete" asp-route-category="x-text='category'" class="btn btn-primary btn-danger" style="color:white;margin-top:10px;">
+                                <i class="bi bi-trash">Delete</i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+    <div>
+        <button x-on:click="categories = await listCategories()" class="btn btn-primary" style="margin-top:25px;">List Categories</button>
+    </div>
+</div>
