@@ -79,7 +79,7 @@
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                jsonRecipe: JSON.stringify(recipe)
+                jsonRecipe: recipe
             })
         })
             .then(res => { return res.json() })
@@ -92,7 +92,6 @@
         recipe.Ingredients[0] = recipe.Ingredients[0].replace("/", "-")
         recipe.Ingredients = recipe.Ingredients[0].split("\r\n")
         recipe.Instructions = recipe.Instructions[0].split("\r\n")
-        console.log(recipe)
         return recipe
     }
     async function deleteRecipe(id) {
@@ -244,17 +243,17 @@
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="font:bolder;text-align:left" class="fw-bold">Ingredients</label>
-                        <textarea x-model="chosenRecipe.Ingredients[0]" placeholder="After every ingredient press enter for new line." rows="5" cols="30"></textarea>
+                        <textarea x-model="chosenRecipe.Ingredients[0]" x-text="chosenRecipe.Ingredients[0]" name="chosenRecipe.Ingredients" placeholder="After every ingredient press enter for new line." rows="5" cols="30"></textarea>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="font:bolder;text-align:left" class="fw-bold">Instructions</label>
-                        <textarea x-model="chosenRecipe.Instructions[0]" placeholder="After every instructions press enter for new line." rows="5" cols="30"></textarea>
+                        <textarea x-model="chosenRecipe.Instructions[0]" x-text="chosenRecipe.Instructions[0]" name="chosenRecipe.Instructions" placeholder="After every instructions press enter for new line." rows="5" cols="30"></textarea>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <form method="post">
                             <label style="font:bolder;text-align:left" class="fw-bold">Choose one or more category</label>
                             <br>
-                            <select x-init="categories = await listCategories()" x-model="chosenRecipe.Categories" id="cars" multiple style="color:black">
+                            <select x-init="categories = await listCategories()" x-model="chosenRecipe.Categories" multiple style="color:black">
                                 <template x-for="cat in categories">
                                     <option x-model="cat" value="cat" x-text="cat"></option>
                                 </template>
@@ -262,7 +261,7 @@
                             <p style="font-weight:bold">Hold down the Ctrl (windows) or Command (Mac) button to select multiple options.</p>
                         </form>
                     </div>
-                    <button x-on:click="chosenRecipe=await adjustRecipe(chosenRecipe);await createRecipe(chosenRecipe);expandRecipe=false" type="submit" class="btn btn-success"><i class="bi bi-plus-circle-fill"> Create Recipe</i></button>
+                    <button x-on:click="chosenRecipe=await adjustRecipe(chosenRecipe);await createRecipe(chosenRecipe);expandRecipe=false" type="submit" class="btn btn-success"><i class="bi bi-plus-circle-fill" style="font-style:normal"> Create Recipe</i></button>
                     <br><br>
                 </div>
             </form>
