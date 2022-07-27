@@ -84,6 +84,31 @@
         })
             .then(res => { return res.json() })
     }
+    async function adjustRecipe(recipe) {
+        recipe.Instructions = recipe.Instructions.filter(item => item)
+        recipe.Ingredients = recipe.Ingredients.filter(item => item)
+        recipe.Categories = recipe.Categories.filter(item => item)
+        recipe.Instructions[0] = recipe.Instructions[0].replace("/", "-")
+        recipe.Ingredients[0] = recipe.Ingredients[0].replace("/", "-")
+        recipe.Ingredients = recipe.Ingredients[0].split("\r\n")
+        recipe.Instructions = recipe.Instructions[0].split("\r\n")
+        console.log(recipe)
+        return recipe
+    }
+    async function deleteRecipe(id) {
+        var url = "https://localhost:7018/api/delete-recipe/"
+        url = url + id
+        return fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: {
+                id: id
+            }
+        })
+            .then(res => { return res.json() })
+    }
 </script>
 <style>
     [x-cloak] {
@@ -129,8 +154,8 @@
                         <div class="card h-100 text-center" style="background-color:#252f3e;margin-left:2px;margin-top:5px;">
                             <div class="card-body">
                                 <h5 x-text="category" class="card-title" style="color:white"></h5>
-                                <a x-on:click="chosenCategory= category ;position=index+1;expandEdit= !expandEdit;expandDelete=false;expandCreate=false" class="btn btn-dark" style="background-color:#FF6A3D;color:white;margin-top:10px;"><i class="bi bi-pencil-square">Edit</i></a>
-                                <a x-on:click="chosenCategory= category ;expandDelete= !expandDelete;expandEdit=false;expandCreate=false" class="btn btn-danger" style="color:white;margin-top:10px;"><i class="bi bi-trash">Delete</i></a>
+                                <a x-on:click="chosenCategory= category ;position=index+1;expandEdit= !expandEdit;expandDelete=false;expandCreate=false" class="btn btn-dark" style="background-color:#FF6A3D;color:white;margin-top:10px;"><i class="bi bi-pencil-square" style="font-style:normal"> Edit</i></a>
+                                <a x-on:click="chosenCategory= category ;expandDelete= !expandDelete;expandEdit=false;expandCreate=false" class="btn btn-danger" style="color:white;margin-top:10px;"><i class="bi bi-trash" style="font-style:normal"> Delete</i></a>
                             </div>
                         </div>
                     </div>
@@ -140,12 +165,12 @@
 
         <!--Create Category-->
 
-        <button x-on:click="expandCreate = ! expandCreate" style="background-color:#252f3e;color:#FF6A3D;margin-top:50px;margin-left:45%" class="btn text-center"><i class="bi bi-plus-circle">Create Category</i></button>
+        <button x-on:click="expandCreate = ! expandCreate" style="background-color:#252f3e;color:#FF6A3D;margin-top:50px;margin-left:45%" class="btn text-center"><i class="bi bi-plus-circle" style="font-style:normal"> Create Category</i></button>
 
         <div x-show="expandCreate" x-cloak x-transition>
             <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#1A2238">
                 <input x-model="chosenCategory" placeholder="Enter category name" type="text" />
-                <button x-on:click="await createCategory(chosenCategory);expandCreate= fasle;expandCategory= false" class="btn btn-success">Add</button>
+                <button x-on:click="await createCategory(chosenCategory);expandCreate= fasle;expandCategory= false" class="btn btn-success" style="font-style:normal"> Add</button>
             </form>
         </div>
 
@@ -154,7 +179,7 @@
         <div x-show="expandDelete" x-cloak x-transition>
             <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#1A2238">
                 <input x-model="chosenCategory" placeholder="Enter category name" type="text" disabled />
-                <button x-on:click="await deleteCategory(chosenCategory);expandDelete= fasle;expandCategory= false" class="btn btn-danger">Delete</button>
+                <button x-on:click="await deleteCategory(chosenCategory);expandDelete= fasle;expandCategory= false" class="btn btn-danger" style="font-style:normal"> Delete</button>
             </form>
         </div>
 
@@ -163,7 +188,7 @@
         <div x-show="expandEdit" x-cloak x-transition>
             <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#1A2238">
                 <input x-model="chosenCategory" type="text" />
-                <button x-on:click="await editCategory(position,chosenCategory);expandEdit= fasle;expandCategory= false" class="btn btn-success">Edit</button>
+                <button x-on:click="await editCategory(position,chosenCategory);expandEdit= fasle;expandCategory= false" class="btn btn-success" style="font-style:normal"> Edit</button>
             </form>
         </div>
 
@@ -171,7 +196,7 @@
 
     <!--List Recipes-->
 
-    <div x-data="{ expandCreate:false, chosenRecipe:{title:'', ingredients:[], instructions:[], categories:[]}, expandDelete:false, expandEdit:false }" x-show="expandRecipe" x-transition>
+    <div x-data="{ expandCreate:false, chosenRecipe:{Title:'', Ingredients:[], Instructions:[], Categories:[]}, expandDelete:false, expandEdit:false }" x-show="expandRecipe" x-cloak x-transition>
         <div class="row row-cols-1 row-cols-md-4 g-2 text-center">
             <template x-for="recipe in recipes">
                 <div class="col">
@@ -179,54 +204,102 @@
                         <div class="card-body">
                             <h5 x-text="recipe.title" class="card-title" style="color:white"></h5>
                             <div x-data="{ expanded: false }">
-                                <button x-on:click="expanded = ! expanded" style="background-color:#F4DB7D;color:black;margin-top:10px;" class="text-center"><i class="bi bi-search">Show Ingredients</i></button>
+                                <button x-on:click="expanded = ! expanded" style="background-color:#F4DB7D;color:black;margin-top:10px;font-style:normal" class="text-center"><i class="bi bi-search" style="font-style:normal"> Show Ingredients</i></button>
                                 <template x-for="ing in recipe.ingredients">
                                     <p x-text="'- '+ing" x-show="expanded" x-collapse class="card-text text-start" x-transition style="color:white"></p>
                                 </template>
                             </div>
                             <br>
                             <div x-data="{ expanded: false }">
-                                <button x-on:click="expanded = ! expanded" style="background-color:#F4DB7D;color:black;margin-top:10px;" class="text-center"><i class="bi bi-search">Show Instructions</i></button>
+                                <button x-on:click="expanded = ! expanded" style="background-color:#F4DB7D;color:black;margin-top:10px;font-style:normal" class="text-center"><i class="bi bi-search" style="font-style:normal"> Show Instructions</i></button>
                                 <template x-for="ins in recipe.instructions">
                                     <p x-text="'- '+ins" x-show="expanded" x-collapse class="card-text text-start" x-transition style="color:white"></p>
                                 </template>
                             </div>
                             <br>
                             <div x-data="{ expanded: false }">
-                                <button x-on:click="expanded = ! expanded" style="background-color:#F4DB7D;color:black;margin-top:10px;" class="text-center"><i class="bi bi-search">Show Categories</i></button>
+                                <button x-on:click="expanded = ! expanded" style="background-color:#F4DB7D;color:black;margin-top:10px;font-style:normal" class="text-center"><i class="bi bi-search" style="font-style:normal"> Show Categories</i></button>
                                 <template x-for="cat in recipe.categories">
                                     <p x-text="'- '+cat" x-show="expanded" x-collapse class="card-text text-start" x-transition style="color:white"></p>
                                 </template>
                             </div>
                             <br>
-                            <a x-on:click="chosenRecipe= recipe ;expandEdit= !expandEdit;expandDelete=false;expandCreate=false" class="btn btn-dark" style="background-color:#FF6A3D;color:white;margin-top:10px;"><i class="bi bi-pencil-square">Edit</i></a>
-                            <a x-on:click="chosenRecipe= recipe ;expandDelete= !expandDelete;expandEdit=false;expandCreate=false" class="btn btn-danger" style="color:white;margin-top:10px;"><i class="bi bi-trash">Delete</i></a>
+                            <a x-on:click="chosenRecipe= recipe ;expandEdit= !expandEdit;expandDelete=false;expandCreate=false" class="btn btn-dark" style="background-color:#FF6A3D;color:white;margin-top:10px;font-style:normal"><i class="bi bi-pencil-square" style="font-style:normal"> Edit</i></a>
+                            <a x-on:click="chosenRecipe= recipe ;expandDelete= !expandDelete;expandEdit=false;expandCreate=false" class="btn btn-danger" style="color:white;margin-top:10px;font-style:normal"><i class="bi bi-trash" style="font-style:normal"> Delete</i></a>
                         </div>
                     </div>
                 </div>
             </template>
         </div>
+
         <!--Create Recipe-->
 
-        <button x-on:click="expandCreate = ! expandCreate" style="background-color:#252f3e;color:#FF6A3D;margin-top:50px;margin-left:45%" class="btn text-center"><i class="bi bi-plus-circle">Create Recipe</i></button>
+        <button x-on:click="expandCreate = ! expandCreate" style="background-color:#252f3e;color:#FF6A3D;margin-top:50px;margin-left:45%" class="btn text-center"><i class="bi bi-plus-circle" style="font-style:normal"> Create Recipe</i></button>
         <div x-show="expandCreate" x-cloak x-transition>
             <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#1A2238">
                 <div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="font:bolder;text-align:left" class="fw-bold">Recipe Title</label>
-                        <input x-model="chosenRecipe.title" class="form-control">
+                        <input x-model="chosenRecipe.Title" class="form-control">
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="font:bolder;text-align:left" class="fw-bold">Ingredients</label>
-                        <textarea x-model="chosenRecipe.ingredients" placeholder="After every ingredient press enter for new line." rows="5" cols="30"></textarea>
+                        <textarea x-model="chosenRecipe.Ingredients[0]" placeholder="After every ingredient press enter for new line." rows="5" cols="30"></textarea>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="font:bolder;text-align:left" class="fw-bold">Instructions</label>
-                        <textarea x-model="chosenRecipe.instructions" placeholder="After every instructions press enter for new line." rows="5" cols="30"></textarea>
+                        <textarea x-model="chosenRecipe.Instructions[0]" placeholder="After every instructions press enter for new line." rows="5" cols="30"></textarea>
                     </div>
-
-                    <button x-on:click="await createRecipe(chosenRecipe);expandRecipe=false" type="submit" class="btn btn-success"><i class="bi bi-plus-circle-fill"> Create Recipe</i></button>
+                    <div class="row mt-4 col-11 m-auto">
+                        <form method="post">
+                            <label style="font:bolder;text-align:left" class="fw-bold">Choose one or more category</label>
+                            <br>
+                            <select x-init="categories = await listCategories()" x-model="chosenRecipe.Categories" id="cars" multiple style="color:black">
+                                <template x-for="cat in categories">
+                                    <option x-model="cat" value="cat" x-text="cat"></option>
+                                </template>
+                            </select>
+                            <p style="font-weight:bold">Hold down the Ctrl (windows) or Command (Mac) button to select multiple options.</p>
+                        </form>
+                    </div>
+                    <button x-on:click="chosenRecipe=await adjustRecipe(chosenRecipe);await createRecipe(chosenRecipe);expandRecipe=false" type="submit" class="btn btn-success"><i class="bi bi-plus-circle-fill"> Create Recipe</i></button>
                     <br><br>
+                </div>
+            </form>
+        </div>
+
+        <!--Delete Recipe-->
+
+        <div x-show="expandDelete" x-cloak x-transition>
+            <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#1A2238">
+                <div>
+                    <div class="row mt-4 col-11 m-auto">
+                        <label style="font:bolder;text-align:left" class="fw-bold">Recipe Title</label>
+                        <input x-model="chosenRecipe.title" class="form-control" disabled>
+                    </div>
+                    <div class="row mt-4 col-11 m-auto">
+                        <label style="font:bolder;text-align:left" class="fw-bold">Ingredients</label>
+                        <template x-for="ing in chosenRecipe.ingredients">
+                            <input x-model="ing" disabled>
+                            <br>
+                        </template>
+                    </div>
+                    <div class="row mt-4 col-11 m-auto">
+                        <label style="font:bolder;text-align:left" class="fw-bold">Instructions</label>
+                        <template x-for="ins in chosenRecipe.instructions">
+                            <input x-model="ins" disabled>
+                            <br>
+                        </template>
+                    </div>
+                    <div class="row mt-4 col-11 m-auto">
+                        <label style="font:bolder;text-align:left" class="fw-bold">Categories</label>
+                        <template x-for="cat in chosenRecipe.categories">
+                            <input x-model="cat" disabled>
+                            <br>
+                        </template>
+                    </div>
+                    <br>
+                    <button x-on:click="await deleteRecipe(chosenRecipe.id);expandDelete= fasle;expandRecipe= false" class="btn btn-danger" style="font-style:normal"> Delete</button>
                 </div>
             </form>
         </div>
