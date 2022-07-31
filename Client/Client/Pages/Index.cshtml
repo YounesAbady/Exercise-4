@@ -1,6 +1,7 @@
 ﻿@page
 @model IndexModel
 <script defer src="https://unpkg.com/alpinejs@3.10.3/dist/cdn.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     async function listCategories() {
         return fetch('https://localhost:7018/api/list-categories', {
@@ -31,7 +32,7 @@
     async function createCategory(category) {
         var url = "https://localhost:7018/api/add-category/"
         url = url + category
-        return fetch(url, {
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -40,7 +41,12 @@
                 category: category
             })
         })
-            .then(res => { return res.json() })
+            .then(res => {
+                return res
+            })
+        if (response.ok) { return true }
+        else { return false }
+
     }
     async function deleteCategory(category) {
         var url = "https://localhost:7018/api/delete-category/"
@@ -85,13 +91,8 @@
             .then(res => { return res.json() })
     }
     async function adjustRecipe(recipe) {
-        recipe.Instructions = recipe.Instructions.filter(item => item)
-        recipe.Ingredients = recipe.Ingredients.filter(item => item)
-        recipe.Categories = recipe.Categories.filter(item => item)
-        recipe.Instructions[0] = recipe.Instructions[0].replace("/", "-")
-        recipe.Ingredients[0] = recipe.Ingredients[0].replace("/", "-")
-        recipe.Ingredients = recipe.Ingredients[0].split("\r\n")
-        recipe.Instructions = recipe.Instructions[0].split("\r\n")
+        recipe.ingredients = recipe.ingredients[0].split("\r\n")
+        recipe.instructions = recipe.instructions[0].split("\r\n")
         return recipe
     }
     async function deleteRecipe(id) {
@@ -108,14 +109,58 @@
         })
             .then(res => { return res.json() })
     }
+    async function updateRecipe(jsonRecipe, id) {
+        var url = "https://localhost:7018/api/update-recipe/"
+        url = url + JSON.stringify(jsonRecipe) + "/" + id
+        return fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                jsonRecipe: jsonRecipe
+            })
+        })
+            .then(res => { return res.json() })
+    }
+    async function fromJsonToString(recipe) {
+        for (let i = 0; i < recipe.ingredients.length; i++) {
+            recipe.ingredients[i] = recipe.ingredients[i].replace(",", "\r\n")
+        }
+        for (let t = 0; t < recipe.instructions.length; t++) {
+            recipe.instructions[t] = recipe.instructions[t].replace(",", "\r\n")
+        }
+        return recipe
+    }
+    async function sweetAlert2(msg, status) {
+        if (status == "error") {
+            await Swal.fire({
+                icon: 'error',
+                title: msg,
+                showConfirmButton: true,
+            })
+        }
+        else {
+            await Swal.fire({
+                icon: 'success',
+                title: msg,
+                showConfirmButton: true,
+            })
+        }
+
+    }
 </script>
 <style>
     [x-cloak] {
         display: none;
     }
 </style>
-<div x-data="{ categories: [], recipes:[], expandCategory:false, expandRecipe:false }">
 
+<div x-data="{ categories: [], recipes:[], expandCategory:false, expandRecipe:false, trigger:false, msg:'',status: '' }">
+    <!--Trigger-->
+    <template x-if="trigger">
+        <div x-init="await sweetAlert2(msg,status)"></div>
+    </template>
     <!--Nav Bar-->
 
     <header>
@@ -143,6 +188,7 @@
         </nav>
     </header>
 
+    <!--Home-->
     <!--List Categories-->
 
     <div x-data="{ expandCreate:false, chosenCategory:'', expandDelete:false, expandEdit:false,position:-1 }" x-show="expandCategory" x-cloak x-transition>
@@ -169,7 +215,7 @@
         <div x-show="expandCreate" x-cloak x-transition>
             <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#1A2238">
                 <input x-model="chosenCategory" placeholder="Enter category name" type="text" />
-                <button x-on:click="await createCategory(chosenCategory);expandCreate= fasle;expandCategory= false" class="btn btn-success" style="font-style:normal"> Add</button>
+                <button x-on:click="trigger=await createCategory(chosenCategory);expandCreate= fasle;expandCategory= false;" class="btn btn-success" style="font-style:normal"> Add</button>
             </form>
         </div>
 
@@ -223,7 +269,7 @@
                                 </template>
                             </div>
                             <br>
-                            <a x-on:click="chosenRecipe= recipe ;expandEdit= !expandEdit;expandDelete=false;expandCreate=false" class="btn btn-dark" style="background-color:#FF6A3D;color:white;margin-top:10px;font-style:normal"><i class="bi bi-pencil-square" style="font-style:normal"> Edit</i></a>
+                            <a x-on:click="chosenRecipe= await fromJsonToString(recipe);expandEdit= !expandEdit;expandDelete=false;expandCreate=false" class="btn btn-dark" style="background-color:#FF6A3D;color:white;margin-top:10px;font-style:normal"><i class="bi bi-pencil-square" style="font-style:normal"> Edit</i></a>
                             <a x-on:click="chosenRecipe= recipe ;expandDelete= !expandDelete;expandEdit=false;expandCreate=false" class="btn btn-danger" style="color:white;margin-top:10px;font-style:normal"><i class="bi bi-trash" style="font-style:normal"> Delete</i></a>
                         </div>
                     </div>
@@ -243,11 +289,11 @@
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="font:bolder;text-align:left" class="fw-bold">Ingredients</label>
-                        <textarea x-model="chosenRecipe.Ingredients[0]" x-text="chosenRecipe.Ingredients[0]" name="chosenRecipe.Ingredients" placeholder="After every ingredient press enter for new line." rows="5" cols="30"></textarea>
+                        <textarea x-text="chosenRecipe.Ingredients[0]" placeholder="After every ingredient press enter for new line." rows="5" cols="30"></textarea>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="font:bolder;text-align:left" class="fw-bold">Instructions</label>
-                        <textarea x-model="chosenRecipe.Instructions[0]" x-text="chosenRecipe.Instructions[0]" name="chosenRecipe.Instructions" placeholder="After every instructions press enter for new line." rows="5" cols="30"></textarea>
+                        <textarea x-model="chosenRecipe.Instructions[0]" placeholder="After every instructions press enter for new line." rows="5" cols="30"></textarea>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <form method="post">
@@ -261,7 +307,7 @@
                             <p style="font-weight:bold">Hold down the Ctrl (windows) or Command (Mac) button to select multiple options.</p>
                         </form>
                     </div>
-                    <button x-on:click="chosenRecipe=await adjustRecipe(chosenRecipe);await createRecipe(chosenRecipe);expandRecipe=false" type="submit" class="btn btn-success"><i class="bi bi-plus-circle-fill" style="font-style:normal"> Create Recipe</i></button>
+                    <button x-on:click="await createRecipe(chosenRecipe);expandRecipe=false" type="submit" class="btn btn-success"><i class="bi bi-plus-circle-fill" style="font-style:normal"> Create Recipe</i></button>
                     <br><br>
                 </div>
             </form>
@@ -303,5 +349,48 @@
             </form>
         </div>
 
+        <!--Update Recipe-->
+
+        <div x-show="expandEdit" x-cloak x-transition>
+            <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#1A2238">
+                <input x-model="chosenRecipe.id" hidden>
+                <div>
+                    <div class="row mt-4 col-11 m-auto">
+                        <label style="font:bolder;text-align:left" class="fw-bold">Recipe Title</label>
+                        <input x-model="chosenRecipe.title" class="form-control">
+                    </div>
+                    <div class="row mt-4 col-11 m-auto">
+                        <label style="font:bolder;text-align:left" class="fw-bold">Ingredients</label>
+                        <textarea x-model="chosenRecipe.ingredients" placeholder="After every ingredient press enter for new line." rows="4" cols="30"></textarea>
+                    </div>
+                    <div class="row mt-4 col-11 m-auto">
+                        <label style="font:bolder;text-align:left" class="fw-bold">Instructions</label>
+                        <textarea x-model="chosenRecipe.instructions" placeholder="After every ingredient press enter for new line." rows="4" cols="30"></textarea>
+                    </div>
+                    <div class="mt-4 text-dark" style="font-weight:bold;font-size:medium">
+                        Old Categories:
+                        <template x-for="cat in chosenRecipe.categories">
+                            <p x-text="cat"></p>
+                        </template>
+                        <br>
+                        <span class="text-danger" style="font-size:large">All old categories will be deleted!<br> Please select new ones.</span>
+                    </div>
+                    <div class="row mt-4 col-11 m-auto">
+                        <form method="post">
+                            <label style="font:bolder;text-align:left" class="fw-bold">Choose one or more category</label>
+                            <br>
+                            <select x-init="categories = await listCategories()" x-model="chosenRecipe.categories" multiple style="color:black">
+                                <template x-for="cat in categories">
+                                    <option x-model="cat" value="cat" x-text="cat"></option>
+                                </template>
+                            </select>
+                            <p style="font-weight:bolder">Hold down the Ctrl (windows) or Command (Mac) button to select multiple options.</p>
+                        </form>
+                    </div>
+                    <br>
+                    <button x-on:click="chosenRecipe = await adjustRecipe(chosenRecipe);await updateRecipe(chosenRecipe,chosenRecipe.id);expandEdit= fasle;expandRecipe= false" class="btn btn-danger" style="font-style:normal"> Edit</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
