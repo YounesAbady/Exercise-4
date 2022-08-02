@@ -54,7 +54,9 @@ namespace Backend.Controllers
         public void AddRecipe(string jsonRecipe)
         {
             Recipe recipe = JsonSerializer.Deserialize<Recipe>(jsonRecipe);
-            if (recipe == null)
+            recipe.Ingredients = recipe.Ingredients.Where(r => !string.IsNullOrWhiteSpace(r)).ToList();
+            recipe.Instructions = recipe.Instructions.Where(r => !string.IsNullOrWhiteSpace(r)).ToList();
+            if (recipe.Ingredients.Count == 0 || recipe.Instructions.Count == 0 || recipe.Categories.Count == 0 || string.IsNullOrWhiteSpace(recipe.Title))
                 throw new InvalidOperationException("Cant be empty");
             else
             {
@@ -135,13 +137,20 @@ namespace Backend.Controllers
             {
                 Recipe oldRecipe = s_recipes.FirstOrDefault(x => x.Id == id);
                 Recipe newRecipe = JsonSerializer.Deserialize<Recipe>(jsonRecipe);
-                oldRecipe.Title = newRecipe.Title;
-                oldRecipe.Categories = newRecipe.Categories;
-                oldRecipe.Ingredients = newRecipe.Ingredients;
-                oldRecipe.Instructions = newRecipe.Instructions;
-                var fileName = PathCombine(Environment.CurrentDirectory, @"\Recipes.json");
-                var jsonString = JsonSerializer.Serialize(s_recipes);
-                File.WriteAllText(fileName, jsonString);
+                newRecipe.Ingredients = newRecipe.Ingredients.Where(r => !string.IsNullOrWhiteSpace(r)).ToList();
+                newRecipe.Instructions = newRecipe.Instructions.Where(r => !string.IsNullOrWhiteSpace(r)).ToList();
+                if (newRecipe.Ingredients.Count == 0 || newRecipe.Instructions.Count == 0 || newRecipe.Categories.Count == 0 ||string.IsNullOrWhiteSpace(newRecipe.Title))
+                    throw new InvalidOperationException("Cant be empty");
+                else
+                {
+                    oldRecipe.Title = newRecipe.Title;
+                    oldRecipe.Categories = newRecipe.Categories;
+                    oldRecipe.Ingredients = newRecipe.Ingredients;
+                    oldRecipe.Instructions = newRecipe.Instructions;
+                    var fileName = PathCombine(Environment.CurrentDirectory, @"\Recipes.json");
+                    var jsonString = JsonSerializer.Serialize(s_recipes);
+                    File.WriteAllText(fileName, jsonString);
+                }
             }
         }
         [HttpGet]

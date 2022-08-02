@@ -7,6 +7,16 @@
         const elem = document.getElementById("autoScroll");
         elem.scrollTop = elem.scrollHeight;
     }, 5000);
+
+    var options = {
+        animation: true,
+        delay: 5000
+    };
+    function toast() {
+        var element = document.getElementById("liveToast");
+        var toastElement = new bootstrap.Toast(element, options);
+        toastElement.show();
+    }
     async function listCategories() {
         return fetch('https://localhost:7018/api/list-categories', {
             method: 'GET',
@@ -129,15 +139,6 @@
         })
             .then(res => { return res.json() })
     }
-    async function fromJsonToString(recipe) {
-        for (let i = 0; i < recipe.ingredients.length; i++) {
-            recipe.ingredients[i] = recipe.ingredients[i] + ("\r\n")
-        }
-        for (let t = 0; t < recipe.instructions.length; t++) {
-            recipe.instructions[t] = recipe.instructions[t] + ("\r\n")
-        }
-        return recipe
-    }
     async function sweetAlert2(msg, status) {
         if (status == "error") {
             await Swal.fire({
@@ -157,11 +158,14 @@
     function adjust(chosenRecipe) {
         chosenRecipe.ingredients[0] = chosenRecipe.ingredients[0].trim();
         chosenRecipe.instructions[0] = chosenRecipe.instructions[0].trim();
-        chosenRecipe.ingredients = chosenRecipe.ingredients[0].split('\n');
-        chosenRecipe.instructions = chosenRecipe.instructions[0].split('\n');
+        let ing = chosenRecipe.ingredients.toString();
+        let ins = chosenRecipe.instructions.toString();
+        chosenRecipe.Ingredients = ing.split(',');
+        chosenRecipe.Instructions = ins.split(',');
+        chosenRecipe.Title = chosenRecipe.title;
+        chosenRecipe.Categories = chosenRecipe.categories;
         return chosenRecipe;
     }
-
 </script>
 <style>
     [x-cloak] {
@@ -199,7 +203,7 @@
     <!--Home-->
 
     <div class="row row-cols-1 row-cols-md-2 g-2 text-center">
-        <div class="col" style="width:400px;height:500px;margin-left:200px;margin-top:25px;border-style:groove;border-color:#66FCF1;background-color:#0B0C10">
+        <div class="col" style="width:400px;height:500px;margin-left:200px;margin-top:25px;border-style:groove;border-color:#66FCF1">
             <div id="carouselExampleSlidesOnly" class="carousel slide" data-bs-ride="carousel">
                 <div class="carousel-inner">
                     <div class="carousel-item active">
@@ -218,7 +222,7 @@
                 <button x-on:click="recipes = await listRecipes();expandRecipe= !expandRecipe;expandCategory=false" style="background-color:#1F2833;color:#C5C6C7;margin-top:25px;" class="btn">Recipes</button>
             </div>
         </div>
-        <div class="col" style="width:400px;height:500px;margin-left:300px;margin-top:25px;border-style:groove;border-color:#66FCF1;background-color:#0B0C10">
+        <div class="col" style="width:400px;height:500px;margin-left:300px;margin-top:25px;border-style:groove;border-color:#66FCF1">
             <div id="carouselExampleSlidesOnly" class="carousel slide" data-bs-ride="carousel">
                 <div class="carousel-inner">
                     <div class="carousel-item active">
@@ -262,7 +266,7 @@
 
         <div id="autoScroll" x-show="expandCreate" x-cloak x-transition>
             <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#1A2238">
-                <input x-model="chosenCategory" placeholder="Enter category name" type="text" />
+                <input x-model="chosenCategory" placeholder="Enter category name" type="text" required />
                 <button x-on:click="trigger=await createCategory(chosenCategory);expandCreate= fasle;expandCategory= false;" class="btn btn-success" style="font-style:normal"> Add</button>
             </form>
         </div>
@@ -280,7 +284,7 @@
 
         <div x-show="expandEdit" x-cloak x-transition>
             <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#1A2238">
-                <input x-model="chosenCategory" type="text" />
+                <input x-model="chosenCategory" type="text" required />
                 <button x-on:click="await editCategory(position,chosenCategory);expandEdit= fasle;expandCategory= false" class="btn btn-success" style="font-style:normal"> Edit</button>
             </form>
         </div>
@@ -293,7 +297,7 @@
         <div class="row row-cols-1 row-cols-md-4 g-2 text-center">
             <template x-for="recipe in recipes">
                 <div class="col">
-                    <div class="card h-100 text-center" style="background-color:transparent;margin-left:2px;margin-top:5px;border:groove;border-color:#66FCF1;">
+                    <div class="card h-100 text-center" style="background-color:transparent;margin-left:2px;margin-top:5px;margin-right:50px;border:groove;border-color:#66FCF1;">
                         <div class="card-body">
                             <h5 x-text="recipe.title" class="card-title" style="color:white"></h5>
                             <div x-data="{ expanded: false }">
@@ -317,37 +321,37 @@
                                 </template>
                             </div>
                             <br>
-                            <a x-on:click="chosenRecipe= await fromJsonToString(recipe) ;expandEdit= !expandEdit;expandDelete=false;expandCreate=false" class="btn btn-dark" style="background-color:#1F2833;color:#C5C6C7;margin-top:10px;font-style:normal"><i class="bi bi-pencil-square" style="font-style:normal"> Edit</i></a>
-                            <a x-on:click="chosenRecipe= recipe ;expandDelete= !expandDelete;expandEdit=false;expandCreate=false" class="btn btn-danger" style="color:#C5C6C7;margin-top:10px;font-style:normal"><i class="bi bi-trash" style="font-style:normal"> Delete</i></a>
+                            <a x-on:click="chosenRecipe= recipe ;expandEdit= !expandEdit;expandDelete=false;expandCreate=false;toast()" class="btn btn-dark" style="background-color:#1F2833;color:#C5C6C7;margin-top:10px;font-style:normal"><i class="bi bi-pencil-square" style="font-style:normal"> Edit</i></a>
+                            <a x-on:click="chosenRecipe= recipe ;expandDelete= !expandDelete;expandEdit=false;expandCreate=false" id="liveToastBtn" class="btn btn-danger" style="color:#C5C6C7;margin-top:10px;font-style:normal"><i class="bi bi-trash" style="font-style:normal"> Delete</i></a>
                         </div>
                     </div>
                 </div>
             </template>
         </div>
+        <button x-on:click="expandCreate = ! expandCreate;expandDelete=false;expandEdit=false" style="background-color:#252f3e;color:white;margin-top:50px;margin-left:45%" class="btn text-center"><i class="bi bi-plus-circle" style="font-style:normal"> Create Recipe</i></button>
 
         <!--Create Recipe-->
 
-        <button x-on:click="expandCreate = ! expandCreate;expandDelete=false;expandEdit=false" style="background-color:#252f3e;color:white;margin-top:50px;margin-left:45%" class="btn text-center"><i class="bi bi-plus-circle" style="font-style:normal"> Create Recipe</i></button>
         <div x-show="expandCreate" x-cloak x-transition x-data="{ing:'' , ins:'' }">
-            <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#66FCF1">
+            <form method="post" id="form" class="align-content-center col-6" style="margin:auto;text-align:center;margin-top:50px;color:#66FCF1">
                 <div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="text-align:left">Recipe Title</label>
-                        <input x-model="chosenRecipe.Title" class="form-control">
+                        <input x-model="chosenRecipe.Title" id="title" required>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="text-align:left">Ingredients</label>
-                        <textarea x-model="ing" class="form-control" placeholder="After every ingredient press enter for new line." rows="5" cols="30"></textarea>
+                        <textarea x-model="ing" id="ingredients" placeholder="After every ingredient press enter for new line." rows="5" cols="30" required></textarea>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="text-align:left">Instructions</label>
-                        <textarea x-model="ins" class="form-control" placeholder="After every instructions press enter for new line." rows="5" cols="30"></textarea>
+                        <textarea x-model="ins" id="instructions" placeholder="After every instructions press enter for new line." rows="5" cols="30" required></textarea>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <form method="post">
                             <label style="text-align:left">Choose one or more category</label>
                             <br>
-                            <select x-init="categories = await listCategories()" x-model="chosenRecipe.Categories" multiple style="color:black">
+                            <select x-init="categories = await listCategories()" x-model="chosenRecipe.Categories" id="categories" multiple style="color:black" required>
                                 <template x-for="cat in categories">
                                     <option x-model="cat" value="cat" x-text="cat"></option>
                                 </template>
@@ -398,6 +402,20 @@
         </div>
 
         <!--Update Recipe-->
+        <!--Note to User-->
+
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" style="background-color:#66FCF1">
+                <div class="toast-header">
+                    <strong class="me-auto">Yum City</strong>
+                    <small>Just Now!</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" style="background-color:#1F2833">
+                    Hello, Chief! separate between ingredients / instructions with a ( , )
+                </div>
+            </div>
+        </div>
 
         <div x-show="expandEdit" x-cloak x-transition>
             <form method="post" class="align-content-center col-6 " style="margin:auto;text-align:center;margin-top:50px;color:#66FCF1">
@@ -405,15 +423,15 @@
                 <div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="text-align:left">Recipe Title</label>
-                        <input x-model="chosenRecipe.title" class="form-control">
+                        <input x-model="chosenRecipe.title" required>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="text-align:left">Ingredients</label>
-                        <textarea x-model="chosenRecipe.ingredients" class="form-control" placeholder="After every ingredient press enter for new line." rows="4" cols="30"></textarea>
+                        <textarea x-model="chosenRecipe.ingredients" placeholder="separate between ingredients with a ," rows="4" cols="30" required></textarea>
                     </div>
                     <div class="row mt-4 col-11 m-auto">
                         <label style="text-align:left">Instructions</label>
-                        <textarea x-model="chosenRecipe.instructions" class="form-control" placeholder="After every ingredient press enter for new line." rows="4" cols="30"></textarea>
+                        <textarea x-model="chosenRecipe.instructions" placeholder="separate between instructions with a ," rows="4" cols="30" required></textarea>
                     </div>
                     <div class="mt-4" style="font-weight:bold;font-size:medium;color:#66FCF1">
                         Current Categories:
@@ -426,7 +444,7 @@
                         <form method="post">
                             <label style="font:bolder;text-align:left" class="fw-bold">Choose one or more category</label>
                             <br>
-                            <select x-init="categories = await listCategories()" x-model="chosenRecipe.categories" multiple style="color:black">
+                            <select x-init="categories = await listCategories()" x-model="chosenRecipe.categories" multiple style="color:black" required>
                                 <template x-for="cat in categories">
                                     <option x-model="cat" value="cat" x-text="cat"></option>
                                 </template>
@@ -435,7 +453,7 @@
                         </form>
                     </div>
                     <br>
-                    <button x-on:click="chosenRecipe=adjust(chosenRecipe);await updateRecipe(chosenRecipe,chosenRecipe.id);expandEdit= fasle;expandRecipe= false" class="btn btn-danger" style="font-style:normal"> Edit</button>
+                    <button x-on:click="chosenRecipe=adjust(chosenRecipe);await updateRecipe(chosenRecipe,chosenRecipe.id);expandEdit= fasle;expandRecipe= false" class="btn btn-success" style="font-style:normal"> Edit</button>
                 </div>
             </form>
         </div>
